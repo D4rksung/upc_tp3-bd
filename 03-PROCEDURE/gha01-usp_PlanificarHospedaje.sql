@@ -1,0 +1,43 @@
+USE BDPetCenter
+
+CREATE PROCEDURE dbo.usp_PlanificarHospedaje
+@Anio INT
+AS
+BEGIN
+	SET NOCOUNT ON
+
+	DECLARE @FECHAS TABLE
+	(
+		Fecha DATE
+	)
+
+	DECLARE @FECHA_INI DATETIME,
+			@FECHA_FIN DATETIME
+
+	SET @FECHA_INI = LTRIM(STR(@Anio)) + '-01-01' 
+	SET @FECHA_FIN = DATEADD(YEAR,1,@FECHA_INI)
+
+	WHILE @FECHA_INI < @FECHA_FIN
+	BEGIN
+		INSERT INTO @FECHAS VALUES (@FECHA_INI)
+
+		SET @FECHA_INI = DATEADD(DAY,1,@FECHA_INI)
+	END
+
+	INSERT INTO dbo.GHA_Lugar_Estado
+	(
+		CodigoLugar,
+		Estado_lugar,
+		Periodo,
+		FechaDia
+	)
+	SELECT
+		LU.CodigoLugar,
+		'DISPONIBLE',
+		@Anio,
+		FEC.Fecha
+	FROM dbo.GHA_Lugar LU (NOLOCK)
+	INNER JOIN @FECHAS FEC ON 1 = 1
+
+	SET NOCOUNT OFF
+END
